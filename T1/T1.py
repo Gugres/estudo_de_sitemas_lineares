@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+import time
+import sys
 
 def GeraMatrizHilbert(n):
     '''Gera uma matriz de Hilbert, onde cada termo a_ij = 1 / (i + j - 1)'''
@@ -24,90 +26,131 @@ def GeraVetor(matriz):
         b[i] = np.sum(matriz[i])
     return b
 
-def main():
-    parte = 2
+def main(parte = 1, teste = False):
+    print("\nTrabalho - Parte ", parte)
+    print("Teste = ", teste, "\n")
     if parte == 1:
-        Parte1()
+        Parte1(teste)
     if parte == 2:
-        Parte2(False)
+        Parte2(teste)
 
-def Parte1():
-    limite_dim = 100
-    resultados = pd.DataFrame({'dim_matriz':([0]*(limite_dim-2)),'norma2 sem Pivo':([0]*(limite_dim-2)),'determinante sem Pivo':([0]*(limite_dim-2)),
-                                'norma2 com Pivo':([0]*(limite_dim-2)),'determinante com Pivo':([0]*(limite_dim-2)), 'norma2 solucao Numpy': ([0]*(limite_dim-2)), 'determinante solucao Numpy': ([0]*(limite_dim-2))})
-    norma2_semPivo = []
-    norma2_comPivo = []
-    norma2_solucaoNumpy = []
-    determinantes_semPivo = []
-    determinantes_comPivo = []
-    determinantes_solucaoNumpy = []
-    dim_matriz = []
-    for i in range(2,100):    
-        matriz = GeraMatrizHilbert(i)
-        b = GeraVetor(matriz)
-        matriz_semPivo, resultado_semPivo, determinante_semPivo = EliminacaoSemPivotamento(matriz, b, i)
-        matriz_comPivo, resultado_comPivo, determinante_comPivo = EliminacaoComPivotamento(matriz, b, i)
-        norma2_semPivo.append(CalculaNormaDaDiferenca(resultado_semPivo, i))
-        norma2_comPivo.append(CalculaNormaDaDiferenca(resultado_comPivo, i))
-        determinantes_semPivo.append(determinante_semPivo)
-        determinantes_comPivo.append(determinante_comPivo)
-        dim_matriz.append(i)
-        norma2_solucaoNumpy.append(CalculaNormaDaDiferenca(np.linalg.solve(matriz,b), i))
-        determinantes_solucaoNumpy.append(np.linalg.det(matriz))
-        # if i >= 10:
-        #     print(np.linalg.solve(matriz,b),"\n")
-        # print("Matriz de Hilbert:\n\n", matriz, "\n")
-        # print("Vetor 'b' do sistema: ", b, "\n")
-        # print("Matriz escalonada pelo metodo de solução sem pivotamento:\n\n", matriz_semPivo, "\n")
-        # print("Matriz escalonada pelo metodo de solução com pivotamento:\n\n", matriz_comPivo, "\n")
-        # print("Solucao encontrada pelo metodo de solucao sem pivotamento: ", resultado_semPivo, "\n")
-        # print("Solucao encontrada pelo metodo de solucao com pivotamento: ", resultado_comPivo, "\n")
-        # return
-    resultados['dim_matriz'] = dim_matriz
-    resultados['norma2 sem Pivo'] = norma2_semPivo
-    resultados['determinante sem Pivo'] = determinantes_semPivo
-    resultados['norma2 com Pivo'] = norma2_comPivo
-    resultados['determinante com Pivo'] = determinantes_comPivo
-    resultados['norma2 solucao Numpy'] = norma2_solucaoNumpy
-    resultados['determinante solucao Numpy'] = determinantes_solucaoNumpy
-    resultados.to_excel("resultados_matrizHilbert.xlsx", index=False)
+def Parte1(teste):
+
+    if teste == False:
+        limite_dim = 100
+        resultados = pd.DataFrame({'dim_matriz':([0]*(limite_dim-2)),'norma2 sem Pivo':([0]*(limite_dim-2)),'determinante sem Pivo':([0]*(limite_dim-2)),
+                                    'norma2 com Pivo':([0]*(limite_dim-2)),'determinante com Pivo':([0]*(limite_dim-2)), 'norma2 com Pivo Escalado':([0]*(limite_dim-2)),
+                                    'determinante com Pivo Escalado':([0]*(limite_dim-2)), 'norma2 solucao Numpy': ([0]*(limite_dim-2)), 'determinante solucao Numpy': ([0]*(limite_dim-2))})
+        norma2_semPivo = []
+        norma2_comPivo = []
+        norma2_comPivoEscalado = []
+        norma2_solucaoNumpy = []
+        determinantes_semPivo = []
+        determinantes_comPivo = []
+        determinantes_comPivoEscalado = []
+        determinantes_solucaoNumpy = []
+        dim_matriz = []
+        for i in range(2,100):
+            # Gera uma matriz de Hilber i x i    
+            matriz = GeraMatrizHilbert(i)
+            # Gera um vetor 'b' com coordenadas iguais as somas das linhas da matriz acima
+            b = GeraVetor(matriz)
+            # Calcula a solucao por eliminacao de Gauss sem pivotamento
+            matriz_semPivo, resultado_semPivo, determinante_semPivo = EliminacaoSemPivotamento(matriz, b, i)
+            # Calcula a solucao por eliminacao de Gauss com pivotamento
+            matriz_comPivo, resultado_comPivo, determinante_comPivo = EliminacaoComPivotamento(matriz, b, i)
+            # Calcula a solucao por eliminacao de Gauss com pivotamento escalado
+            matriz_comPivoEscalado, resultado_comPivoEscalado, determinante_comPivoEscalado = EliminacaoComPivotamentoEscalado(matriz, b, i)
+            # Adiciona cada variavel a sua lista
+            norma2_semPivo.append(CalculaNormaDaDiferenca(resultado_semPivo, i))
+            norma2_comPivo.append(CalculaNormaDaDiferenca(resultado_comPivo, i))
+            norma2_comPivoEscalado.append(CalculaNormaDaDiferenca(resultado_comPivoEscalado, i))
+            determinantes_semPivo.append(determinante_semPivo)
+            determinantes_comPivo.append(determinante_comPivo)
+            determinantes_comPivoEscalado.append(determinante_comPivoEscalado)
+            norma2_solucaoNumpy.append(CalculaNormaDaDiferenca(np.linalg.solve(matriz,b), i))
+            determinantes_solucaoNumpy.append(np.linalg.det(matriz))
+            dim_matriz.append(i)
+        # Adiciona as listas ao DataFrame
+        resultados['dim_matriz'] = dim_matriz
+        resultados['norma2 sem Pivo'] = norma2_semPivo
+        resultados['determinante sem Pivo'] = determinantes_semPivo
+        resultados['norma2 com Pivo'] = norma2_comPivo
+        resultados['determinante com Pivo'] = determinantes_comPivo
+        resultados['norma2 com Pivo Escalado'] = norma2_comPivoEscalado
+        resultados['determinante com Pivo Escalado'] = determinantes_comPivoEscalado
+        resultados['norma2 solucao Numpy'] = norma2_solucaoNumpy
+        resultados['determinante solucao Numpy'] = determinantes_solucaoNumpy
+        # resultados.to_excel("resultados_matrizHilbert.xlsx", index=False)
+        resultados.to_csv("resultados_matrizHilbert.csv", index=False)
+    else:
+        matriz_teste = np.array([(1,1,1),(1,0,10),(0,10,1)])
+        b_teste = np.array([0,-48,25])
+        matriz_semPivo, resultado_semPivo, determinante_semPivo = EliminacaoSemPivotamento(matriz_teste, b_teste, len(matriz_teste))
+        matriz_comPivo, resultado_comPivo, determinante_comPivo = EliminacaoComPivotamentoEscalado(matriz_teste, b_teste, len(matriz_teste))
+        print("\nMatriz qualquer:\n")
+        print(matriz_teste,"\n")
+        print("Vetor 'b' do sistema: ", b_teste,"\n")
+        print("Matriz escalonada pelo metodo de solução sem pivotamento:\n")
+        print(matriz_semPivo,"\n")
+        print("Solucao encontrada pelo metodo de solucao sem pivotamento:", resultado_semPivo)
+        print("Solucao encontrada pelo metodo de solucao sem pivotamento:", resultado_semPivo)
 
 def Parte2(teste):
+
     if teste == False:
         limite_dim = 71
         resultados = pd.DataFrame({'dim_matriz':([0]*(limite_dim-2)),'norma2 Cholesky':([0]*(limite_dim-2)),'determinante Cholesky':([0]*(limite_dim-2)),
-                                    'norma2 sem Pivo':([0]*(limite_dim-2)),'determinante sem Pivo':([0]*(limite_dim-2)), 'norma2 solucao Numpy': ([0]*(limite_dim-2)), 'determinante solucao Numpy': ([0]*(limite_dim-2))})
+                                    'tempo comp. Cholesky':([0]*(limite_dim-2)), 'norma2 sem Pivo':([0]*(limite_dim-2)), 'determinante sem Pivo':([0]*(limite_dim-2)), 
+                                    'tempo comp. sem Pivo':([0]*(limite_dim-2)), 'norma2 solucao Numpy': ([0]*(limite_dim-2)), 'determinante solucao Numpy': ([0]*(limite_dim-2)), 'tempo comp. sol. Numpy':([0]*(limite_dim-2))})
         norma2_Cholesky = []
         norma2_semPivo = []
         norma2_solucaoNumpy = []
         determinantes_Cholesky = []
         determinantes_semPivo = []
         determinantes_solucaoNumpy = []
+        tempos_Cholesky = []
+        tempos_semPivo = []
+        tempos_Numpy = []
         dim_matriz = []
         i = 2
         while i < 71:
+            # Gera matriz aleatoria de ordem i x i
             matriz = GeraMatrizAleatoria(i)
+            # Gera um vetor 'b' com coordenadas iguais as somas das linhas da matriz acima
             b = GeraVetor(matriz)
-            matriz_semPivo, resultado_semPivo, determinante_semPivo = EliminacaoSemPivotamento(matriz, b, i)
-            if determinante_semPivo == 0:
-                continue 
+            # Verifica se a matriz gerada não é singular
+            if np.linalg.det(matriz) == 0:
+                continue
+            # Gera a matriz simetrica positiva definida
             matriz_simetrica = np.dot(np.transpose(matriz), matriz)
+            # Calcula a solucao pelo metodo de Cholesky
+            tempo_Cholesky1 = time.time()
             matrizL, matrizL_trans, resultado_cholesky, determinante_cholesky = DecomposicaoDeCholesky(matriz_simetrica, GeraVetor(matriz_simetrica), i)
+            tempo_Cholesky2 = time.time()
+            # Calcula a solucao por eliminacao de Gauss sem pivotamento
+            tempo_semPivo1 = time.time()
             matriz_semPivo, resultado_semPivo, determinante_semPivo = EliminacaoSemPivotamento(matriz_simetrica, b, i)
+            tempo_semPivo2 = time.time()
+            # Calcula a solucao utilizando linalg.solve()
+            tempo_solNumpy1 = time.time()
+            resultado_numpy = np.linalg.solve(matriz_simetrica,b)
+            determinante_numpy = np.linalg.det(matriz_simetrica)
+            tempo_solNumpy2 = time.time()
+            # Adiciona cada variavel a sua lista
             norma2_Cholesky.append(CalculaNormaDaDiferenca(resultado_cholesky, i))
             norma2_semPivo.append(CalculaNormaDaDiferenca(resultado_semPivo, i))
             determinantes_Cholesky.append(determinante_cholesky)
             determinantes_semPivo.append(determinante_semPivo)
             dim_matriz.append(i)
-            norma2_solucaoNumpy.append(CalculaNormaDaDiferenca(np.linalg.solve(matriz_simetrica,b), i))
-            determinantes_solucaoNumpy.append(np.linalg.det(matriz_simetrica))
-            # print(matriz)
-            # print(np.transpose(matriz))
-            # return
+            norma2_solucaoNumpy.append(CalculaNormaDaDiferenca(resultado_numpy, i))
+            determinantes_solucaoNumpy.append(determinante_numpy)
+            tempos_Cholesky.append(tempo_Cholesky2 - tempo_Cholesky1)
+            tempos_semPivo.append(tempo_semPivo2 - tempo_semPivo1)
+            tempos_Numpy.append(tempo_solNumpy2 - tempo_solNumpy1)
             i += 1
-            # print("\nMatrizes triangulares Cholesky:\n")
-            # print(matrizL, "\n")
-            # print(matrizL_trans, "\n")
+    
+        # Adiciona as listas ao DataFrame
         resultados['dim_matriz'] = dim_matriz
         resultados['norma2 Cholesky'] = norma2_Cholesky
         resultados['determinante Cholesky'] = determinantes_Cholesky
@@ -115,15 +158,22 @@ def Parte2(teste):
         resultados['determinante sem Pivo'] = determinantes_semPivo
         resultados['norma2 solucao Numpy'] = norma2_solucaoNumpy
         resultados['determinante solucao Numpy'] = determinantes_solucaoNumpy
-        resultados.to_excel("resultados_Cholesky.xlsx", index=False)
-    
+        resultados['tempo comp. Cholesky'] = tempos_Cholesky
+        resultados['tempo comp. sem Pivo'] = tempos_semPivo
+        resultados['tempo comp. sol. Numpy'] = tempos_Numpy
+        # resultados.to_excel("resultados_Cholesky.xlsx", index=False)
+        resultados.to_csv("resultados_Cholesky.csv", index=False)
     else:
-        matriz_teste = np.array([(4,2,2),(2,6,2),(2,2,5)])
-        b_teste = np.array([8,10,9])
+        matriz_teste = np.array([(4,0,10),(0,16,12),(10,12,35)])
+        b_teste = np.array([14,28,57])
         matrizL, matrizL_trans, resultado_cholesky, determinante_cholesky = DecomposicaoDeCholesky(matriz_teste, b_teste, len(matriz_teste))
+        print("Matriz A do sistema:\n")
+        print(matriz_teste,"\n")
+        print("Vetor 'b' do sistema: ", b_teste,"\n")
+        print("Decomposicao de A em L e L_transposta:\n")
         print(matrizL,"\n")
-        print(matrizL_trans,"\n\n")
-        print(resultado_cholesky)
+        print(matrizL_trans,"\n")
+        print("Solucao encontrada pelo metodo de Cholesky:\n", resultado_cholesky)
 
 def EliminacaoSemPivotamento(matriz, b, i):
     '''Recebe uma matriz e um vetor 'b' e realiza a eliminação de Gauss sem pivotamento.
@@ -194,6 +244,42 @@ def EliminacaoComPivotamento(matriz, b, i):
     determinante = CalculaDeterminante(matriz_aux, i-1, trocasDeLinha)
     return (matriz_aux, x, determinante)
 
+def EliminacaoComPivotamentoEscalado(matriz, b, i):
+    '''Recebe uma matriz e um vetor 'b' e realiza a eliminação de Gauss com pivotamento.
+    Retorna o vetor solução 'x' e o determinante da matriz'''
+    matriz_aux = matriz.copy()
+    b_aux = b.copy()
+    trocasDeLinha = 0
+    linha = 0
+    try:
+        while linha < (i-1):
+            linha_maior = PivotamentoParcialEscalado(matriz_aux, linha)
+            # p = linha + 1
+            # max = matriz_aux[linha_maior][linha]
+            # while p < i:
+            #     if max < matriz_aux[p][linha] and matriz_aux[p][linha] != 0.0: 
+            #         max = matriz_aux[p][linha]
+            #         linha_maior = p
+            #     p += 1
+            if matriz_aux[linha_maior][linha] == 0: return (None, None, None) 
+            if linha_maior != linha:
+                matriz_aux[(linha,linha_maior),:] = matriz_aux[(linha_maior,linha),:]
+                b_aux[[linha,linha_maior]] = b_aux[[linha_maior,linha]]
+                trocasDeLinha += 1
+            linha_final = linha + 1
+            while linha_final < i:
+                m = matriz_aux[linha_final][linha] / matriz_aux[linha][linha]
+                matriz_aux[linha_final] = matriz_aux[linha_final] - m*matriz_aux[linha]
+                b_aux[linha_final] = b_aux[linha_final] - m*b_aux[linha]
+                linha_final += 1
+            linha += 1
+    except:
+        print("Erro no metodo com pivotamento escalado, na matriz de ordem: ", i, "\n")
+        return (None, None, None)
+    x = CalculaResultadoMatrizSuperior(matriz_aux, b_aux, i-1)
+    determinante = CalculaDeterminante(matriz_aux, i-1, trocasDeLinha)
+    return (matriz_aux, x, determinante)
+
 def DecomposicaoDeCholesky(matriz, b, n):
     matriz_aux = matriz.copy()
     matrizL = np.zeros((n,n))
@@ -232,6 +318,23 @@ def DecomposicaoDeCholesky(matriz, b, n):
     x = CalculaResultadoMatrizSuperior(matrizL_trans, y, n-1)
     determinante = (CalculaDeterminante(matrizL, n-1, 0)) * (CalculaDeterminante(matrizL_trans, n-1, 0))
     return (matrizL, matrizL_trans, x, determinante)
+
+def PivotamentoParcialEscalado(matriz, linha_maior):
+    '''Recebe uma matriz e retorna a linha que contem o maior valor relativo (considerando a matriz de Hilbert)'''
+    max_linha1 = 0
+    max_linha2 = 0
+    max_relativo = 0
+    linha_max_relativo = linha_maior
+    for i in range(linha_maior, len(matriz)):
+        max_linha = 0
+        for j in range(0, len(matriz[0])):
+            if abs(matriz[i][j]) >= max_linha: 
+                max_linha2 = max_linha1
+                max_linha1 = abs(matriz[i][j])
+        if max_relativo <= abs((max_linha2 / max_linha1)):
+            max_relativo = abs((max_linha2 / max_linha1))
+            linha_max_relativo = i
+    return linha_max_relativo
 
 def CalculaDeterminante(matriz, n, trocasDeLinha):
     '''Recebe uma matriz e retorna o determinante. Como a matriz passada é uma triângular superior
@@ -286,4 +389,7 @@ def CalculaNormaDaDiferenca(resultado, n):
     return norma_2
 
 if __name__ == "__main__":
-    main()
+    clargs = sys.argv # command-line args
+    params = clargs[1:]
+
+    main(parte=int(params[0]), teste=bool(int(params[1])))
