@@ -83,9 +83,12 @@ def Parte1(teste):
         resultados['determinante solucao Numpy'] = determinantes_solucaoNumpy
         # resultados.to_excel("resultados_matrizHilbert.xlsx", index=False)
         resultados.to_csv("resultados_matrizHilbert.csv", index=False)
+        resultados.to_excel("resultados_matrizHilbert.xlsx", index=False) 
     else:
-        matriz_teste = np.array([(1,1,1),(1,0,10),(0,10,1)])
-        b_teste = np.array([0,-48,25])
+        # matriz_teste = np.array([(1,1,1),(1,0,10),(0,10,1)])
+        # b_teste = np.array([0,-48,25])
+        matriz_teste = np.array([(1,0,-2),(-1/2,1,-1/4),(1,-1/2,1)])
+        b_teste = np.array([0.2, -1.425, 2])
         matriz_semPivo, resultado_semPivo, determinante_semPivo = EliminacaoSemPivotamento(matriz_teste, b_teste, len(matriz_teste))
         matriz_comPivo, resultado_comPivo, determinante_comPivo = EliminacaoComPivotamentoEscalado(matriz_teste, b_teste, len(matriz_teste))
         print("\nMatriz qualquer:\n")
@@ -94,7 +97,7 @@ def Parte1(teste):
         print("Matriz escalonada pelo metodo de solução sem pivotamento:\n")
         print(matriz_semPivo,"\n")
         print("Solucao encontrada pelo metodo de solucao sem pivotamento:", resultado_semPivo)
-        print("Solucao encontrada pelo metodo de solucao sem pivotamento:", resultado_semPivo)
+        print("Solucao encontrada pelo metodo de solucao com pivotamento:", resultado_comPivo)
 
 def Parte2(teste):
 
@@ -163,6 +166,7 @@ def Parte2(teste):
         resultados['tempo comp. sol. Numpy'] = tempos_Numpy
         # resultados.to_excel("resultados_Cholesky.xlsx", index=False)
         resultados.to_csv("resultados_Cholesky.csv", index=False)
+        resultados.to_excel("resultados_Cholesky.xlsx", index=False)
     else:
         matriz_teste = np.array([(4,0,10),(0,16,12),(10,12,35)])
         b_teste = np.array([14,28,57])
@@ -385,7 +389,7 @@ def CalculaNormaDaDiferenca(resultado, n):
     resultado_aux = resultado.copy()
     resultado_correto = np.array([1.0] * n)
     norma_2_vetor = (resultado_aux - resultado_correto)
-    norma_2 = np.sqrt(sum(abs(norma_2_vetor)**2))
+    norma_2 = np.linalg.norm(norma_2_vetor)
     return norma_2
 
 if __name__ == "__main__":
